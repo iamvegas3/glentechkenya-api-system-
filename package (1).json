@@ -1,0 +1,14 @@
+{
+  "name": "glentechkenya-api",
+  "version": "1.0.0",
+  "description": "GlenTechKenya Social Media Downloader API",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@distube/ytdl-core": "^4.14.4",
+    "node-fetch": "^2.7.0"
+  }
+}
