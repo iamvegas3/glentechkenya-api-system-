@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>GlenTechKenya API — Social Media Downloader API</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07080a;--surface:#0e1117;--surface2:#141720;--border:#1c2030;
+  --green:#22d67a;--green2:#18a85f;--blue:#4fa3f9;--purple:#9b7cf7;
+  --orange:#f97c1a;--red:#f43f5e;--text:#dde2ee;--muted:#5a6178;--mono:'Space Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+
+/* NOISE */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9998;opacity:.5}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(7,8,10,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 40px}
+.nlogo{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green);letter-spacing:1px;text-decoration:none}
+.nlogo-icon{width:28px;height:28px;background:var(--green);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#000;font-size:14px}
+.ndot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:ndotblink 2s infinite}
+@keyframes ndotblink{0%,100%{opacity:1}50%{opacity:.2}}
+.nlinks{display:flex;gap:28px;list-style:none}
+.nlinks a{color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;letter-spacing:.3px;transition:.2s}
+.nlinks a:hover{color:var(--text)}
+.nbtn{background:var(--green);color:#000;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:2px;padding:9px 20px;border-radius:6px;text-decoration:none;transition:.2s;border:none;cursor:pointer}
+.nbtn:hover{background:var(--green2)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:80px 40px 60px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(34,214,122,.06) 0%,transparent 70%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(34,214,122,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(34,214,122,.03) 1px,transparent 1px);background-size:48px 48px}
+.hero-inner{position:relative;z-index:1;max-width:1100px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.hero-left{}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(34,214,122,.08);border:1px solid rgba(34,214,122,.18);border-radius:20px;padding:6px 14px;font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:28px}
+.hero h1{font-size:clamp(36px,5vw,64px);font-weight:800;line-height:1.05;margin-bottom:20px}
+.hero h1 em{color:var(--green);font-style:normal}
+.hero-desc{font-size:16px;color:var(--muted);line-height:1.75;margin-bottom:36px;max-width:460px}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap}
+.btn-primary{background:var(--green);color:#000;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;padding:14px 28px;border-radius:8px;text-decoration:none;border:none;cursor:pointer;transition:.2s;display:inline-block}
+.btn-primary:hover{background:var(--green2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(34,214,122,.3)}
+.btn-outline{background:transparent;color:var(--text);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:2px;padding:14px 28px;border-radius:8px;text-decoration:none;border:1px solid var(--border);cursor:pointer;transition:.2s;display:inline-block}
+.btn-outline:hover{border-color:var(--green);color:var(--green)}
+.hero-right{}
+.code-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;font-family:var(--mono);font-size:12px;line-height:1.7}
+.code-header{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.code-dots{display:flex;gap:6px}
+.code-dot{width:10px;height:10px;border-radius:50%}
+.code-body{padding:20px;overflow-x:auto}
+.c-url{color:#4fa3f9}.c-key{color:#22d67a}.c-val{color:#f97c1a}.c-str{color:#9b7cf7}.c-bracket{color:#5a6178}.c-num{color:#fb923c}
+
+/* STATS */
+.stats{padding:60px 40px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stats-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.stat{background:var(--bg);padding:40px 32px;text-align:center}
+.stat-num{font-family:var(--mono);font-size:36px;font-weight:700;color:var(--green);margin-bottom:8px}
+.stat-label{color:var(--muted);font-size:13px;font-weight:600;letter-spacing:1px}
+
+/* SECTION */
+.section{padding:100px 40px}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-tag{font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--green);margin-bottom:16px}
+.section-title{font-size:clamp(28px,4vw,48px);font-weight:800;line-height:1.1;margin-bottom:16px}
+.section-desc{color:var(--muted);font-size:16px;line-height:1.7;max-width:560px}
+
+/* ENDPOINTS */
+.endpoints{margin-top:60px;display:flex;flex-direction:column;gap:20px}
+.endpoint-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.endpoint-header{padding:20px 24px;display:flex;align-items:center;gap:16px;cursor:pointer;user-select:none}
+.method-badge{font-family:var(--mono);font-size:10px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px}
+.method-get{background:rgba(34,214,122,.12);color:var(--green);border:1px solid rgba(34,214,122,.2)}
+.endpoint-path{font-family:var(--mono);font-size:14px;color:var(--text)}
+.endpoint-desc{margin-left:auto;font-size:13px;color:var(--muted)}
+.endpoint-body{padding:0 24px 24px;border-top:1px solid var(--border)}
+.param-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+.param-table th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:600;font-size:11px;letter-spacing:1px;border-bottom:1px solid var(--border)}
+.param-table td{padding:10px 12px;border-bottom:1px solid rgba(28,32,48,.5);vertical-align:top}
+.param-table td:first-child{font-family:var(--mono);color:var(--blue);font-size:12px}
+.param-table td:nth-child(2){color:var(--purple);font-family:var(--mono);font-size:11px}
+.required-badge{background:rgba(244,63,94,.1);color:var(--red);font-size:10px;font-family:var(--mono);padding:2px 7px;border-radius:4px;border:1px solid rgba(244,63,94,.2)}
+.example-block{margin-top:16px;background:var(--surface2);border-radius:8px;padding:16px;font-family:var(--mono);font-size:12px;line-height:1.8;overflow-x:auto;border:1px solid var(--border)}
+
+/* PLATFORMS */
+.platforms-grid{margin-top:60px;display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.platform-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 20px;text-align:center;transition:.3s}
+.platform-card:hover{border-color:var(--green);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.platform-icon{font-size:36px;margin-bottom:12px}
+.platform-name{font-weight:700;font-size:14px;margin-bottom:4px}
+.platform-status{font-size:11px;color:var(--green);font-family:var(--mono)}
+
+/* GET KEY SECTION */
+.keygen-section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px;margin-top:20px}
+.keygen-form{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;margin-top:32px;align-items:end}
+.form-group{display:flex;flex-direction:column;gap:8px}
+.form-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--green)}
+.form-input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-family:var(--sans);font-size:14px;color:var(--text);outline:none;transition:.2s}
+.form-input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(34,214,122,.1)}
+.form-input::placeholder{color:var(--muted)}
+.key-result{margin-top:24px;background:var(--surface2);border:1px solid rgba(34,214,122,.2);border-radius:10px;padding:20px;display:none}
+.key-result-label{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:10px}
+.key-value{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text);letter-spacing:2px}
+.key-copy{margin-top:12px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:2px;padding:8px 16px;border-radius:6px;cursor:pointer;transition:.2s}
+.key-copy:hover{border-color:var(--green);color:var(--green)}
+
+/* LIVE DEMO */
+.demo-section{background:linear-gradient(135deg,rgba(34,214,122,.04),rgba(79,163,249,.04));border:1px solid var(--border);border-radius:16px;padding:48px;margin-top:20px}
+.demo-input-row{display:flex;gap:12px;margin-top:24px}
+.demo-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-family:var(--sans);font-size:14px;color:var(--text);outline:none;transition:.2s}
+.demo-input:focus{border-color:var(--green)}
+.demo-input::placeholder{color:var(--muted)}
+.demo-key-input{width:220px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-family:var(--mono);font-size:12px;color:var(--green);outline:none;transition:.2s}
+.demo-key-input:focus{border-color:var(--green)}
+.demo-result{margin-top:20px;display:none}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;display:grid;grid-template-columns:80px 1fr;gap:16px;align-items:start}
+.result-thumb{width:80px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:var(--surface2)}
+.result-title-text{font-weight:700;font-size:15px;margin-bottom:4px}
+.result-author{color:var(--muted);font-size:12px;margin-bottom:12px}
+.download-btns{display:flex;flex-wrap:wrap;gap:8px}
+.dl-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(34,214,122,.08);border:1px solid rgba(34,214,122,.2);border-radius:6px;padding:8px 16px;font-family:var(--mono);font-size:11px;color:var(--green);text-decoration:none;transition:.2s}
+.dl-btn:hover{background:var(--green);color:#000}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(34,214,122,.2);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{color:var(--red);font-size:13px;font-family:var(--mono);padding:16px;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.15);border-radius:8px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:60px 40px 40px}
+.footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr;gap:60px}
+.footer-brand p{color:var(--muted);font-size:13px;line-height:1.7;margin-top:12px;max-width:280px}
+.footer-col h4{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--green);margin-bottom:16px}
+.footer-col ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.footer-col a{color:var(--muted);text-decoration:none;font-size:13px;transition:.2s}
+.footer-col a:hover{color:var(--text)}
+.footer-bottom{max-width:1100px;margin:40px auto 0;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.footer-bottom span{color:var(--green);font-family:var(--mono)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero-inner{grid-template-columns:1fr}
+  .hero-right{display:none}
+  .stats-inner{grid-template-columns:repeat(2,1fr)}
+  .platforms-grid{grid-template-columns:repeat(3,1fr)}
+  .keygen-form{grid-template-columns:1fr}
+  .demo-input-row{flex-direction:column}
+  .demo-key-input{width:100%}
+  .footer-inner{grid-template-columns:1fr}
+  nav{padding:0 20px}
+  .nlinks{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nlogo">
+    <div class="nlogo-icon">G</div>
+    GlenTechKenya API
+    <span class="ndot"></span>
+  </a>
+  <ul class="nlinks">
+    <li><a href="#docs">Docs</a></li>
+    <li><a href="#platforms">Platforms</a></li>
+    <li><a href="#getkey">Get Key</a></li>
+    <li><a href="#demo">Live Demo</a></li>
+  </ul>
+  <a href="#getkey" class="nbtn">GET FREE KEY</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge">🇰🇪 BUILT IN KENYA · v1.0</div>
+      <h1>The Social Media<br/><em>Downloader API</em><br/>for Developers</h1>
+      <p class="hero-desc">GlenTechKenya API lets you download videos, reels, shorts and audio from TikTok, YouTube, Instagram, Facebook and Twitter with a single API call.</p>
+      <div class="hero-actions">
+        <a href="#getkey" class="btn-primary">GET FREE API KEY</a>
+        <a href="#docs" class="btn-outline">VIEW DOCS</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="code-card">
+        <div class="code-header">
+          <div class="code-dots">
+            <div class="code-dot" style="background:#f43f5e"></div>
+            <div class="code-dot" style="background:#f97c1a"></div>
+            <div class="code-dot" style="background:#22d67a"></div>
+          </div>
+          <span style="font-size:11px;color:var(--muted)">GET /api/download</span>
+        </div>
+        <div class="code-body">
+<pre><span class="c-url">GET</span> /api/download
+  <span class="c-key">?url</span>=<span class="c-str">https://tiktok.com/@user/video/123</span>
+  <span class="c-key">&apikey</span>=<span class="c-str">GTKAPI-FREE-001</span>
+
+<span class="c-bracket">// Response</span>
+<span class="c-bracket">{</span>
+  <span class="c-key">"status"</span>: <span class="c-str">"success"</span>,
+  <span class="c-key">"api"</span>: <span class="c-str">"GlenTechKenya API"</span>,
+  <span class="c-key">"platform"</span>: <span class="c-str">"tiktok"</span>,
+  <span class="c-key">"data"</span>: <span class="c-bracket">{</span>
+    <span class="c-key">"title"</span>: <span class="c-str">"My TikTok Video"</span>,
+    <span class="c-key">"author"</span>: <span class="c-str">"@username"</span>,
+    <span class="c-key">"medias"</span>: <span class="c-bracket">[</span>
+      <span class="c-bracket">{</span>
+        <span class="c-key">"quality"</span>: <span class="c-str">"HD (No Watermark)"</span>,
+        <span class="c-key">"url"</span>: <span class="c-str">"https://..."</span>,
+        <span class="c-key">"ext"</span>: <span class="c-str">"mp4"</span>
+      <span class="c-bracket">}</span>
+    <span class="c-bracket">]</span>
+  <span class="c-bracket">}</span>
+<span class="c-bracket">}</span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div class="stat"><div class="stat-num">5+</div><div class="stat-label">PLATFORMS</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">ENDPOINTS</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">FREE TIER</div></div>
+    <div class="stat"><div class="stat-num">🇰🇪</div><div class="stat-label">MADE IN KENYA</div></div>
+  </div>
+</div>
+
+<!-- DOCS -->
+<section class="section" id="docs">
+  <div class="section-inner">
+    <div class="section-tag">// DOCUMENTATION</div>
+    <h2 class="section-title">Simple, Powerful API</h2>
+    <p class="section-desc">Three endpoints. One API key. Download from anywhere.</p>
+
+    <div class="endpoints">
+
+      <!-- Endpoint 1 -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/api/download</span>
+          <span class="endpoint-desc">Download media from any supported platform</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="param-table">
+            <tr><th>PARAM</th><th>TYPE</th><th>DESCRIPTION</th><th></th></tr>
+            <tr><td>url</td><td>string</td><td>The social media video/post URL</td><td><span class="required-badge">REQUIRED</span></td></tr>
+            <tr><td>apikey</td><td>string</td><td>Your GlenTechKenya API key</td><td><span class="required-badge">REQUIRED</span></td></tr>
+          </table>
+          <div class="example-block"><span class="c-url">GET</span> <span class="c-str">https://glentechkenya-api.vercel.app/api/download?url=https://www.tiktok.com/@user/video/123456&apikey=GTKAPI-FREE-001</span>
+
+<span class="c-bracket">// You can also pass apikey as a header:</span>
+<span class="c-key">x-api-key:</span> <span class="c-str">GTKAPI-FREE-001</span></div>
+        </div>
+      </div>
+
+      <!-- Endpoint 2 -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/api/keygen</span>
+          <span class="endpoint-desc">Generate a new free API key</span>
+        </div>
+        <div class="endpoint-body">
+          <table class="param-table">
+            <tr><th>PARAM</th><th>TYPE</th><th>DESCRIPTION</th><th></th></tr>
+            <tr><td>name</td><td>string</td><td>Your name or app name</td><td><span class="required-badge">REQUIRED</span></td></tr>
+            <tr><td>email</td><td>string</td><td>Your email address</td><td><span class="required-badge">REQUIRED</span></td></tr>
+          </table>
+          <div class="example-block"><span class="c-url">GET</span> <span class="c-str">https://glentechkenya-api.vercel.app/api/keygen?name=Glen&email=glen@example.com</span></div>
+        </div>
+      </div>
+
+      <!-- Endpoint 3 -->
+      <div class="endpoint-card">
+        <div class="endpoint-header">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/api/index</span>
+          <span class="endpoint-desc">API health check & info</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="example-block"><span class="c-url">GET</span> <span class="c-str">https://glentechkenya-api.vercel.app/api/index</span>
+
+<span class="c-bracket">// Returns API status, version, and all endpoint info</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PLATFORMS -->
+<section class="section" id="platforms" style="padding-top:0">
+  <div class="section-inner">
+    <div class="section-tag">// SUPPORTED PLATFORMS</div>
+    <h2 class="section-title">Download From Anywhere</h2>
+    <div class="platforms-grid">
+      <div class="platform-card"><div class="platform-icon">🎵</div><div class="platform-name">TikTok</div><div class="platform-status">✓ ACTIVE</div></div>
+      <div class="platform-card"><div class="platform-icon">▶️</div><div class="platform-name">YouTube</div><div class="platform-status">✓ ACTIVE</div></div>
+      <div class="platform-card"><div class="platform-icon">📸</div><div class="platform-name">Instagram</div><div class="platform-status">✓ ACTIVE</div></div>
+      <div class="platform-card"><div class="platform-icon">👥</div><div class="platform-name">Facebook</div><div class="platform-status">✓ ACTIVE</div></div>
+      <div class="platform-card"><div class="platform-icon">🐦</div><div class="platform-name">Twitter / X</div><div class="platform-status">✓ ACTIVE</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GET KEY -->
+<section class="section" id="getkey" style="padding-top:0">
+  <div class="section-inner">
+    <div class="section-tag">// API KEY</div>
+    <h2 class="section-title">Get Your Free API Key</h2>
+    <p class="section-desc">Free tier includes 100 requests/day. No credit card required.</p>
+
+    <div class="keygen-section">
+      <div class="keygen-form">
+        <div class="form-group">
+          <label class="form-label">YOUR NAME</label>
+          <input type="text" class="form-input" id="kg-name" placeholder="Glen Mwangi"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EMAIL ADDRESS</label>
+          <input type="email" class="form-input" id="kg-email" placeholder="glen@example.com"/>
+        </div>
+        <button class="btn-primary" onclick="generateKey()" id="kg-btn">GENERATE KEY</button>
+      </div>
+
+      <div class="key-result" id="key-result">
+        <div class="key-result-label">// YOUR API KEY — SAVE THIS NOW</div>
+        <div class="key-value" id="key-value">GTKAPI-XXXX-XXXX</div>
+        <button class="key-copy" onclick="copyKey()">📋 COPY KEY</button>
+        <p style="color:var(--muted);font-size:12px;margin-top:12px">⚠️ This key is shown only once. Save it securely. Free plan: 100 requests/day.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LIVE DEMO -->
+<section class="section" id="demo" style="padding-top:0">
+  <div class="section-inner">
+    <div class="section-tag">// LIVE DEMO</div>
+    <h2 class="section-title">Try It Right Now</h2>
+    <p class="section-desc">Paste any social media URL and your API key to test a real download.</p>
+
+    <div class="demo-section">
+      <div style="margin-top:0">
+        <label class="form-label" style="display:block;margin-bottom:8px">ENTER YOUR API KEY</label>
+        <input type="text" class="demo-key-input" id="demo-apikey" placeholder="GTKAPI-FREE-001" value="GTKAPI-FREE-001" style="width:100%;margin-bottom:16px"/>
+        <label class="form-label" style="display:block;margin-bottom:8px">PASTE SOCIAL MEDIA URL</label>
+        <div class="demo-input-row">
+          <input type="text" class="demo-input" id="demo-url" placeholder="https://www.tiktok.com/@user/video/..."/>
+          <button class="btn-primary" onclick="tryDemo()" id="demo-btn">⬇ FETCH</button>
+        </div>
+      </div>
+
+      <div class="demo-result" id="demo-result"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nlogo" style="font-size:14px"><div class="nlogo-icon">G</div>GlenTechKenya API</div>
+      <p>A powerful social media downloader API built in Kenya 🇰🇪. Free for developers, fast and reliable.</p>
+    </div>
+    <div class="footer-col">
+      <h4>API</h4>
+      <ul>
+        <li><a href="#docs">Documentation</a></li>
+        <li><a href="#getkey">Get API Key</a></li>
+        <li><a href="#demo">Live Demo</a></li>
+        <li><a href="/api/index">API Status</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>CONTACT</h4>
+      <ul>
+        <li><a href="mailto:glentechkenya@gmail.com">glentechkenya@gmail.com</a></li>
+        <li><a href="#">@GlenTechKenya</a></li>
+        <li><a href="#">Kenya 🇰🇪</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>GLENTECHKENYA API</span> © 2025 — Built in Kenya 🇰🇪
+    <span>v1.0.0 · ONLINE</span>
+  </div>
+</footer>
+
+<script>
+// ── KEY GENERATOR ──
+async function generateKey() {
+  const name = document.getElementById('kg-name').value.trim();
+  const email = document.getElementById('kg-email').value.trim();
+  const btn = document.getElementById('kg-btn');
+  const result = document.getElementById('key-result');
+
+  if (!name || !email) { alert('Please fill in your name and email.'); return; }
+
+  btn.textContent = 'GENERATING...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/keygen?name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    if (data.status === 'success') {
+      document.getElementById('key-value').textContent = data.api_key;
+      result.style.display = 'block';
+      result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      alert(data.message || 'Failed to generate key.');
+    }
+  } catch (e) {
+    alert('Error connecting to API. Make sure you have deployed to Vercel.');
+  }
+
+  btn.textContent = 'GENERATE KEY';
+  btn.disabled = false;
+}
+
+function copyKey() {
+  const key = document.getElementById('key-value').textContent;
+  navigator.clipboard.writeText(key).then(() => {
+    const btn = document.querySelector('.key-copy');
+    btn.textContent = '✅ COPIED!';
+    setTimeout(() => btn.textContent = '📋 COPY KEY', 2000);
+  });
+}
+
+// ── LIVE DEMO ──
+async function tryDemo() {
+  const url = document.getElementById('demo-url').value.trim();
+  const apikey = document.getElementById('demo-apikey').value.trim();
+  const btn = document.getElementById('demo-btn');
+  const result = document.getElementById('demo-result');
+
+  if (!url) { alert('Please paste a URL.'); return; }
+  if (!apikey) { alert('Please enter your API key.'); return; }
+
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  result.style.display = 'block';
+  result.innerHTML = '<div style="display:flex;align-items:center;gap:10px;color:var(--muted);padding:16px"><span class="spinner"></span> Fetching media info...</div>';
+
+  try {
+    const res = await fetch(`/api/download?url=${encodeURIComponent(url)}&apikey=${encodeURIComponent(apikey)}`);
+    const data = await res.json();
+
+    if (data.status === 'success') {
+      const d = data.data;
+      result.innerHTML = `
+        <div class="result-card">
+          ${d.thumbnail ? `<img src="${d.thumbnail}" class="result-thumb" onerror="this.style.display='none'"/>` : '<div class="result-thumb"></div>'}
+          <div>
+            <div class="result-title-text">${esc(d.title)}</div>
+            ${d.author ? `<div class="result-author">by ${esc(d.author)}</div>` : ''}
+            <div class="download-btns">
+              ${(d.medias||[]).map(m=>`
+                <a href="${esc(m.url)}" target="_blank" class="dl-btn">
+                  ⬇ ${esc(m.quality)} (.${esc(m.ext)})
+                </a>`).join('')}
+            </div>
+          </div>
+        </div>`;
+    } else {
+      result.innerHTML = `<div class="error-msg">⚠ ${esc(data.message || 'Download failed')}</div>`;
+    }
+  } catch(e) {
+    result.innerHTML = `<div class="error-msg">⚠ Could not connect. Deploy to Vercel first, then test here.</div>`;
+  }
+
+  btn.innerHTML = '⬇ FETCH';
+  btn.disabled = false;
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('demo-url').addEventListener('keydown', e => { if(e.key==='Enter') tryDemo(); });
+</script>
+</body>
+</html>
